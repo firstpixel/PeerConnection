@@ -15,6 +15,8 @@
 #import <Foundation/Foundation.h>
 #import <MultipeerConnectivity/MultipeerConnectivity.h>
 
+
+
 @protocol PeerServiceManagerDelegate;
 
 @interface PeerServiceManager : NSObject <MCNearbyServiceAdvertiserDelegate, MCNearbyServiceBrowserDelegate, MCSessionDelegate>{
@@ -23,8 +25,7 @@
     
 }
 
-@property (weak) id<PeerServiceManagerDelegate> delegate;
-@property (weak) id<MCBrowserViewControllerDelegate> bcVCDelegate;
+@property (weak) id<PeerServiceManagerDelegate,MCBrowserViewControllerDelegate> delegate;
 @property (retain) NSString* PeerServiceType;
 
 -(void)startBrowsingAndAdvertising;
@@ -35,10 +36,13 @@
 
 @end
 
-@protocol PeerServiceManagerDelegate <NSObject>
+@protocol PeerServiceManagerDelegate <MCBrowserViewControllerDelegate>
 @required
 -(void)connectedDevicesChanged:(PeerServiceManager*)peerServiceManager connectedDevices: (NSArray<NSString *>*)connectedDevices totalDevices:(int)totalDevices;
--(void)receiveData:(PeerServiceManager*)peerServiceManager dataString: (NSString*) dataString;
+-(void)receiveData:(PeerServiceManager*)peerServiceManager sendData: (NSData*) gameData;
+- (void)browserViewControllerDidFinish:(MCBrowserViewController *)browserViewController;
+- (void)browserViewControllerWasCancelled:(MCBrowserViewController *)browserViewController;
+
 
 
 @end

@@ -9,7 +9,7 @@
 #import "ViewController.h"
 #import "PeerServiceManager.h"
 
-@interface ViewController ()<PeerServiceManagerDelegate, MCBrowserViewControllerDelegate>
+@interface ViewController ()<PeerServiceManagerDelegate>
 @property (weak, nonatomic) IBOutlet UILabel *connectionsLabel;
 @property (weak, nonatomic) IBOutlet UIButton *connectButton;
 @property (weak, nonatomic) IBOutlet UIButton *redButton;
@@ -41,13 +41,17 @@
     
     
     [PeerServiceManager sharedInstance].delegate = self;
-    [PeerServiceManager sharedInstance].bcVCDelegate = self;
     
 }
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+}
+
+
+-(void)changeColor: (UIColor*)color {
+    self.view.backgroundColor = color;
 }
 
 
@@ -80,8 +84,9 @@
     
 }
 
--(void)receiveData:(PeerServiceManager*)peerServiceManager dataString: (NSString*) dataString{
+-(void)receiveData:(PeerServiceManager*)peerServiceManager sendData: (NSData*) gameData{
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+        NSString* dataString = [[NSString alloc] initWithData:gameData encoding:NSUTF8StringEncoding];
         if([dataString isEqualToString:@"red"]){
             [self changeColor:[UIColor redColor]];
         }else{
@@ -90,23 +95,18 @@
     }];
 }
 
--(void)changeColor: (UIColor*)color {
-    self.view.backgroundColor = color;
-}
+
 
 
 #pragma MCBrowserViewControllerDelegate
 - (void)browserViewControllerDidFinish:(MCBrowserViewController *)browserViewController{
-    [browserViewController dismissViewControllerAnimated:YES completion:^(void){
-        NSLog(@"Dismissed FINISH");
-    }];
+    NSLog(@"Dismissed FINISH");
+    
 }
 
 // Notifies delegate that the user taps the cancel button.
 - (void)browserViewControllerWasCancelled:(MCBrowserViewController *)browserViewController{
-    [browserViewController dismissViewControllerAnimated:YES completion:^(void){
-        NSLog(@"Dismissed Cancelled");
-    }];
+    NSLog(@"Dismissed Cancelled");
 
 }
 

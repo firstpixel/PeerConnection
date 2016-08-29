@@ -11,8 +11,7 @@
 
 
 
-
-@interface PeerServiceManager()<MCBrowserViewControllerDelegate, MCNearbyServiceAdvertiserDelegate, MCNearbyServiceBrowserDelegate, MCSessionDelegate>
+@interface PeerServiceManager()<UIActionSheetDelegate, MCBrowserViewControllerDelegate, MCNearbyServiceAdvertiserDelegate, MCNearbyServiceBrowserDelegate, MCSessionDelegate>
 
 @end
 
@@ -29,6 +28,17 @@
 @synthesize PeerServiceType;
 
 static PeerServiceManager *_sharedInstance;
+
+// Make a singleton class
++ (PeerServiceManager *) sharedInstance
+{
+    if (!_sharedInstance)
+    {
+        _sharedInstance = [[PeerServiceManager alloc] init];
+    }
+    
+    return _sharedInstance;
+}
 
 - (id) init {
     self = [super init];
@@ -65,7 +75,7 @@ static PeerServiceManager *_sharedInstance;
     if (!browserVC){
         browserVC = [[MCBrowserViewController alloc] initWithServiceType:PeerServiceType
                                                                       session:sessionLocal];
-        browserVC.delegate = _bcVCDelegate;
+        browserVC.delegate = self;
     } else {
         NSLog(@"Browser VC init skipped -- already exists");
     }
@@ -92,15 +102,7 @@ static PeerServiceManager *_sharedInstance;
 }
 
 
-+ (PeerServiceManager *) sharedInstance
-{
-    if (!_sharedInstance)
-    {
-        _sharedInstance = [[PeerServiceManager alloc] init];
-    }
-    
-    return _sharedInstance;
-}
+
 
 #pragma MCNearbyServiceAdvertiserDelegate <NSObject>
 // Incoming invitation request.  Call the invitationHandler block with YES
@@ -111,7 +113,8 @@ static PeerServiceManager *_sharedInstance;
              invitationHandler:(void (^)(BOOL accept, MCSession *session))invitationHandler {
     
     NSLog(@"didReceiveInvitationFromPeer: %@ ", peerID);
-    invitationHandler(true, sessionLocal);
+
+    invitationHandler(YES, sessionLocal);
 }
 
 // Advertising did not start due to an error.
@@ -141,8 +144,6 @@ static PeerServiceManager *_sharedInstance;
 // Browsing did not start due to an error.
 - (void)browser:(MCNearbyServiceBrowser *)browser didNotStartBrowsingForPeers:(NSError *)error{
     NSLog(@"didNotStartBrowsingForPeers:%@ ",error);
-    
-    
 }
 
 #pragma MCSessionDelegate
@@ -168,9 +169,6 @@ static PeerServiceManager *_sharedInstance;
             }];
             break;
     }
-    
-    
-    
     NSLog(@"peer: %@  didChangeState: %@ ", peerID.displayName, stateString);
     
     NSArray *arrayOfNames = [NSArray array];
@@ -192,14 +190,8 @@ static PeerServiceManager *_sharedInstance;
 
 // Received data from remote peer.
 - (void)session:(MCSession *)session didReceiveData:(NSData *)data fromPeer:(MCPeerID *)peerID{
-    /*
-     NSLog("%@", "didReceiveData: \(data.length) bytes")
-     let str = NSString(data: data, encoding: NSUTF8StringEncoding) as! String
-     self.delegate?.colorChanged(self, colorString: str)
-     */
     NSLog(@"didReceiveData: %lu bytes", (unsigned long)data.length);
-    NSString* str = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-    [_delegate receiveData:self dataString:str];
+    [_delegate receiveData:self sendData:data];
 }
 
 // Received a byte stream from remote peer.
@@ -248,14 +240,31 @@ static PeerServiceManager *_sharedInstance;
 // Notifies the delegate, when the user taps the done button.
 - (void)browserViewControllerDidFinish:(MCBrowserViewController *)browserViewController{
     [self stopAdvertisingAndBrowsing];
+    [browserViewController dismissViewControllerAnimated:YES completion:^(void){
+        NSLog(@"Dismissed FINISH here");
+    }];
+    //call delegate method
+    [_delegate browserViewControllerDidFinish:browserViewController];
+    
 }
 
 // Notifies delegate that the user taps the cancel button.
 - (void)browserViewControllerWasCancelled:(MCBrowserViewController *)browserViewController{
     [self stopAdvertisingAndBrowsing];
-
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+        
+        NSLog(@"TEST");
+    [browserVC dismissViewControllerAnimated:YES completion:^(void){
+        NSLog(@"Dismissed Cancelled here");
+    }];
+        }];
+    //call delegate method
+    [_delegate browserViewControllerWasCancelled:browserViewController];
+    
 }
 
 
 @end
+
+
 
